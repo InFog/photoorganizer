@@ -23,21 +23,42 @@ type pictureData struct {
 	Longitude string
 }
 
-func output(s string) {
+var (
+	keepFiles bool = true
+)
+
+func output(s ...interface{}) {
 	fmt.Println(s)
 }
 
-func parseInput() (string, error) {
-	/**
-	source := ""
-	destination := ""
-	*/
+func isFile(fileName string) bool {
+	isfile := true
 
-	if len(os.Args) < 2 {
-		return "", errors.New("Missing parameters")
+	if fileInfo, err := os.Stat(fileName); err != nil {
+		isfile = false
+	} else {
+		if fileInfo.IsDir() {
+			isfile = false
+		}
 	}
 
-	return os.Args[1], nil
+	return isfile
+}
+
+func parseInput() ([]string, error) {
+	var filesToMove []string
+
+	if len(os.Args) < 2 {
+		return filesToMove, errors.New("Missing parameters")
+	}
+
+	for i := 1; i < len(os.Args); i++ {
+		if isFile(os.Args[i]) {
+			filesToMove = append(filesToMove, os.Args[i])
+		}
+	}
+
+	return filesToMove, nil
 }
 
 func getPicturesData(file *os.File) *pictureData {
@@ -133,19 +154,12 @@ func moveFile(origin string, destFilename string, destDirectory string) {
 	orig, _ := os.Open(origin)
 	defer orig.Close()
 
-	io.Copy(dest, orig)
-	/** TODO remove the original file */
+	if keepFiles {
+		io.Copy(dest, orig)
+	}
 }
 
-func main() {
-	output("Starting")
-
-	fileName, err := parseInput()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
+func moveImage(fileName string) {
 	fileExtension := fileName[len(fileName)-3:]
 
 	if _, err := os.Stat(fileName); err != nil {
@@ -161,7 +175,7 @@ func main() {
 
 	pData := getPicturesData(file)
 	monthName := getMonthName(pData.Month)
-	destDirectory := fmt.Sprintf("dest/%d/%s/%d/", pData.Year, monthName, pData.Day)
+	destDirectory := fmt.Sprintf("/tmp/dest/%d/%s/%d/", pData.Year, monthName, pData.Day)
 	destFilename := fmt.Sprintf("%02d_%02d_%02d.%s", pData.Hour, pData.Minute, pData.Second, fileExtension)
 
 	moveFile(fileName, destFilename, destDirectory)
@@ -170,4 +184,20 @@ func main() {
 
 	/** Destination should be DEST/YYYY/MM/DD/HH_MM_SS.EXT when no location available */
 	/** Destination should be DEST/Country/City/YYYY/MM/DD/HH_MM_SS.EXT when no location available */
+}
+
+func main() {
+	output("Starting")
+
+	fileNames, err := parseInput()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	for i := 0; i < len(fileNames); i++ {
+		moveImage(fileNames[i])
+	}
+
+	output(fmt.Sprintf("Moved %d files", len(fileNames)))
 }
