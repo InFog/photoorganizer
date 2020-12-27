@@ -122,7 +122,7 @@ func getMonthName(month int) string {
 }
 
 func getFinalDestinationFile(destination string, i int) string {
-	if _, err := os.Stat(destination); err == nil {
+	if isFile(destination) {
 		if i == 1 {
 			destination = destination[0:len(destination)-4] + "_" + strconv.Itoa(i) + destination[len(destination)-4:]
 		} else if i > 1 {
@@ -162,7 +162,7 @@ func moveFile(origin string, destFilename string, destDirectory string) {
 func moveImage(fileName string) {
 	fileExtension := fileName[len(fileName)-3:]
 
-	if _, err := os.Stat(fileName); err != nil {
+	if !isFile(fileName) {
 		log.Fatal(errors.New(fmt.Sprintf("The file '%s' does not exist", fileName)))
 		return
 	}
