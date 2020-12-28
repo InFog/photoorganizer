@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/InFog/photoorganizer/utils"
+
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
 )
@@ -28,21 +30,7 @@ var (
 )
 
 func output(s ...interface{}) {
-	fmt.Println(s)
-}
-
-func isFile(fileName string) bool {
-	isfile := true
-
-	if fileInfo, err := os.Stat(fileName); err != nil {
-		isfile = false
-	} else {
-		if fileInfo.IsDir() {
-			isfile = false
-		}
-	}
-
-	return isfile
+	fmt.Println(s...)
 }
 
 func parseInput() ([]string, error) {
@@ -53,7 +41,7 @@ func parseInput() ([]string, error) {
 	}
 
 	for i := 1; i < len(os.Args); i++ {
-		if isFile(os.Args[i]) {
+		if utils.IsFile(os.Args[i]) {
 			filesToMove = append(filesToMove, os.Args[i])
 		}
 	}
@@ -122,7 +110,7 @@ func getMonthName(month int) string {
 }
 
 func getFinalDestinationFile(destination string, i int) string {
-	if isFile(destination) {
+	if utils.IsFile(destination) {
 		if i == 1 {
 			destination = destination[0:len(destination)-4] + "_" + strconv.Itoa(i) + destination[len(destination)-4:]
 		} else if i > 1 {
@@ -162,7 +150,7 @@ func moveFile(origin string, destFilename string, destDirectory string) {
 func moveImage(fileName string) {
 	fileExtension := fileName[len(fileName)-3:]
 
-	if !isFile(fileName) {
+	if !utils.IsFile(fileName) {
 		log.Fatal(errors.New(fmt.Sprintf("The file '%s' does not exist", fileName)))
 		return
 	}
